@@ -79,6 +79,9 @@ const styles = (theme) => ({
 });
 
 export class NewPaletteForm extends Component {
+  static defaultProps = {
+    maxColors: 20,
+  };
   constructor(props) {
     super(props);
     this.state = {
@@ -86,13 +89,16 @@ export class NewPaletteForm extends Component {
       currentColor: 'teal',
       newColorName: '',
       newPaletteName: '',
-      colors: [{ color: 'blue', name: 'blue' }],
+      colors: this.props.palettes[0].colors,
+      // colors: [{ color: 'blue', name: 'blue' }],
     };
     this.updateCurrentColor = this.updateCurrentColor.bind(this);
     this.addNewColor = this.addNewColor.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.removeColor = this.removeColor.bind(this);
+    this.clearColors = this.clearColors.bind(this);
+    this.addRandomColor = this.addRandomColor.bind(this);
   }
 
   componentDidMount() {
@@ -168,9 +174,33 @@ export class NewPaletteForm extends Component {
     }));
   };
 
+  clearColors() {
+    this.setState({
+      colors: [],
+    });
+  }
+
+  addRandomColor() {
+    // pick random color from existing palettes
+    const allColors = this.props.palettes
+      .map(
+        (p) =>
+          //  'flat' means flat([x]) => x
+          p.colors
+      )
+      .flat();
+    // console.log(allColors);
+    var rand = Math.floor(Math.random() * allColors.length);
+    const randomColor = allColors[rand];
+    console.log(randomColor);
+    this.setState({ colors: [...this.state.colors, randomColor] });
+    // console.log(this.state.colors);
+  }
+
   render() {
-    const { classes } = this.props;
-    const { open } = this.state;
+    const { classes, maxColors } = this.props;
+    const { open, colors } = this.state;
+    const paletteIsFull = colors.length >= maxColors;
     return (
       <div className={classes.root}>
         <CssBaseline />
@@ -229,10 +259,19 @@ export class NewPaletteForm extends Component {
           <Divider />
           <Typography variant="h4">Design your Palette</Typography>
           <div>
-            <Button variant="contained" color="secondary">
-              Clear Button
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={this.clearColors}
+            >
+              Clear Colors
             </Button>
-            <Button variant="contained" color="primary">
+            <Button
+              disabled={paletteIsFull}
+              variant="contained"
+              color="primary"
+              onClick={this.addRandomColor}
+            >
               Random Color
             </Button>
           </div>
@@ -253,12 +292,17 @@ export class NewPaletteForm extends Component {
               ]}
             />
             <Button
-              style={{ backgroundColor: this.state.currentColor }}
+              style={{
+                backgroundColor: paletteIsFull
+                  ? 'grey'
+                  : this.state.currentColor,
+              }}
+              disabled={paletteIsFull}
               variant="contained"
               color="primary"
               type="submit"
             >
-              ADD COLOR
+              {paletteIsFull ? 'Palette Full' : 'Add COLOR'}
             </Button>
           </ValidatorForm>
         </Drawer>
@@ -269,21 +313,21 @@ export class NewPaletteForm extends Component {
           })}
         >
           <div className={classes.drawerHeader} />
-
-          {this.state.colors.map((color) => (
-            <DraggableColorList
-              colors={this.state.colors}
-              removeColor={this.removeColor}
-              axis="xy"
-              onSortEnd={this.onSortEnd}
+          <DraggableColorList
+            colors={colors}
+            removeColor={this.removeColor}
+            axis="xy"
+            onSortEnd={this.onSortEnd}
+          />
+          {/* {this.state.colors.map((color) => (
+            
+            <DraggableColorBox
+              key={color.name}
+              color={color.color}
+              name={color.name}
+              handleClick={() => this.removeColor(color.name)}
             />
-            // <DraggableColorBox
-            //   key={color.name}
-            //   color={color.color}
-            //   name={color.name}
-            //   handleClick={() => this.removeColor(color.name)}
-            // />
-          ))}
+          ))} */}
         </main>
       </div>
     );
